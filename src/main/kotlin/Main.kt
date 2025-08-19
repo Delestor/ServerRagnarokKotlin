@@ -10,16 +10,22 @@ fun main() {
     val server = ServerSocket(9999)
     println("Servidor iniciado en puerto 9999")
 
-    val client = server.accept()
-    println("Cliente conectado: ${client.remoteSocketAddress}")
+    while(true) {
+        val client = server.accept()
+        println("Cliente conectado: ${client.remoteSocketAddress}")
 
-    val output = PrintWriter(client.getOutputStream(), true)
-    val input = BufferedReader(InputStreamReader(client.inputStream))
+        while(true) {
+            val output = PrintWriter(client.getOutputStream(), true)
+            val input = BufferedReader(InputStreamReader(client.inputStream))
 
-    println("Recibido mensaje del cliente: ${input.readLine()}")
+            println("Recibido mensaje del cliente: ${input.readLine()}")
 
-    output.println("${input.readLine()} to the client.")
+            output.println("${input.readLine()} enviado al cliente.")
 
-    client.close()
+            Thread.sleep(1000)
+        }
+
+        client.close()
+    }
     server.close()
 }
