@@ -12,19 +12,24 @@ fun main() {
 
     while(true) {
         val client = server.accept()
-        println("Cliente conectado: ${client.remoteSocketAddress}")
+        println("===Cliente conectado: ${client.remoteSocketAddress}===")
 
         while(true) {
             val output = PrintWriter(client.getOutputStream(), true)
             val input = BufferedReader(InputStreamReader(client.inputStream))
 
-            println("Recibido mensaje del cliente: ${input.readLine()}")
+            val mensajeCliente = input.readLine() ?: break
 
-            output.println("${input.readLine()} enviado al cliente.")
+            println("Recibido mensaje de ${client.remoteSocketAddress}: ${mensajeCliente}")
+
+            output.println("${mensajeCliente} responde el servidor.")
+
+            println("Mensaje enviado al ${client.remoteSocketAddress}")
 
             Thread.sleep(1000)
         }
 
+        println("===Cliente desconectado: ${client.remoteSocketAddress}===")
         client.close()
     }
     server.close()
