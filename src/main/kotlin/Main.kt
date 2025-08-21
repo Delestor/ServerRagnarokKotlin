@@ -31,6 +31,7 @@ fun clientConnection(server: ServerSocket){
                 }
             }
             println("===Cerramos conexión con el cliente ${client.remoteSocketAddress}===")
+            client.close()
         }.start()
     }
 }
