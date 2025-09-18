@@ -5,16 +5,17 @@ import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.ServerSocket
 import java.util.Scanner
+import kotlin.concurrent.thread
 
 fun main() {
     println("Hello World!")
     val server = ServerSocket(9999)
     println("Servidor iniciado en puerto 9999")
 
-    //clientConnection(server)
-    leerDeTeclado(server)
 
-    server.close()
+    thread { ClientHandler(server.accept()).run() }
+    //thread { ClientHandler(server.accept()).run() }
+
 }
 
 fun clientConnection(server: ServerSocket){
