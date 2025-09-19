@@ -15,6 +15,8 @@ class ClientHandler(client: Socket) {
     private var clientId: Int = -1
 
     fun run(){
+
+        println("inetAddress: ${client.inetAddress}, port: ${client.port}")
         isRunning = true
         if(clientId == -1)
             addNewClient()
@@ -29,7 +31,7 @@ class ClientHandler(client: Socket) {
                 }
             }
 
-            //if(scanner.hasNext()){
+            if(scanner.hasNext()){
                 var clientPosition = GlobalData.listClientPosition.get(clientId)
                 val input = scanner.nextLine()
                 val coordinates = input.split(" ").filter { it.isNotBlank() }
@@ -41,7 +43,7 @@ class ClientHandler(client: Socket) {
                 println("Coordenadas recibidas: X = $x, Y = $y, para el cliente: $clientId")
 
                 GlobalData.listClientPosition.set(clientId, clientPosition)
-            //}
+            }
         }
     }
 

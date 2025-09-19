@@ -13,8 +13,17 @@ fun main() {
     println("Servidor iniciado en puerto 9999")
 
 
-    thread { ClientHandler(server.accept()).run() }
     //thread { ClientHandler(server.accept()).run() }
+    //thread { ClientHandler(server.accept()).run() }
+
+    while (true) {
+        val client = server.accept()
+        println("Cliente conectado: ${client.remoteSocketAddress}")
+
+        Thread {
+            ClientHandler(client).run()
+        }.start()
+    }
 
 }
 
