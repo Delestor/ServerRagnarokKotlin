@@ -44,12 +44,14 @@ class ClientHandler(client: Socket) {
 
                 GlobalData.listClientPosition.set(clientId, clientPosition)
             }
+
+            Thread.sleep(10)
         }
     }
 
     private fun checkClientPosition(pos: Int) {
         if(GlobalData.listClientPosition.size >= pos+1){
-            println("Check client $pos position")
+            //println("Check client $pos position")
             var clientPosition = GlobalData.listClientPosition[pos]
             sendClientPosition(clientPosition)
         }else{
@@ -58,7 +60,7 @@ class ClientHandler(client: Socket) {
     }
 
     fun sendClientPosition(clientPosition : ClientPositionComponent){
-        write("SendingPosition")
+        //write("SendingPosition")
         write(clientPosition.posX.toString())
         write(clientPosition.posY.toString())
     }
