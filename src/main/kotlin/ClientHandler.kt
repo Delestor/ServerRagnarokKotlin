@@ -1,5 +1,9 @@
 package org.example
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.io.PrintWriter
 import java.net.Socket
 import java.util.Scanner
@@ -13,6 +17,8 @@ class ClientHandler(client: Socket) {
     private val writer: PrintWriter = PrintWriter(client.getOutputStream(), true)
     private val firstClient: Boolean = true
     private var clientId: Int = -1
+    private val scope = CoroutineScope(Dispatchers.IO)
+    private var job : Job? = null
 
     fun run(){
 
@@ -21,6 +27,7 @@ class ClientHandler(client: Socket) {
         if(clientId == -1)
             addNewClient()
 
+        sendPositionToClient()
         //write("Welcome to the server.")
         while(isRunning){
             when (clientId){
@@ -31,21 +38,37 @@ class ClientHandler(client: Socket) {
                 }
             }
 
-            if(scanner.hasNext()){
-                var clientPosition = GlobalData.listClientPosition.get(clientId)
-                val input = scanner.nextLine()
-                val coordinates = input.split(" ").filter { it.isNotBlank() }
-                val x = coordinates[0].toFloat()
-                val y = coordinates[1].toFloat()
-                clientPosition.posX = x
-                clientPosition.posY = y
-
-                println("Coordenadas recibidas: X = $x, Y = $y, para el cliente: $clientId")
-
-                GlobalData.listClientPosition.set(clientId, clientPosition)
-            }
-
             Thread.sleep(10)
+        }
+    }
+
+    private fun sendPositionToClient() {
+
+        scope.launch {
+            println("Escuchamos mensaje cliente $clientId en ${Thread.currentThread().name}")
+            while(isRunning) {
+                /*try {*/
+                if (scanner.hasNext()) {
+                    synchronized(GlobalData.listClientPosition) {
+                        var clientPosition = GlobalData.listClientPosition.get(clientId)
+                        val input = scanner.nextLine()
+                        val coordinates = input.split(" ").filter { it.isNotBlank() }
+                        val x = coordinates[0].toFloat()
+                        val y = coordinates[1].toFloat()
+                        clientPosition.posX = x
+                        clientPosition.posY = y
+
+                        println("Coordenadas recibidas: X = $x, Y = $y, para el cliente: $clientId")
+
+                        GlobalData.listClientPosition.set(clientId, clientPosition)
+                    }
+                }
+            }
+            /*}catch (e: Exception){
+                println("Conexión perdida con el cliente $clientId: ${e.message}")
+            }finally {
+                isRunning = false
+            }*/
         }
     }
 
@@ -55,7 +78,7 @@ class ClientHandler(client: Socket) {
             var clientPosition = GlobalData.listClientPosition[pos]
             sendClientPosition(clientPosition)
         }else{
-            println("Client $pos not initialized")
+            //println("Client $pos not initialized")
         }
     }
 
