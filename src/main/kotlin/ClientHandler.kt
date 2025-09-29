@@ -15,7 +15,7 @@ class ClientHandler(client: Socket) {
     private var isRunning: Boolean = false
     private val scanner: Scanner = Scanner(client.getInputStream())
     private val writer: PrintWriter = PrintWriter(client.getOutputStream(), true)
-    private var clientId: Int = -1
+    private var currentClient: Int = -1
     private val scope = CoroutineScope(Dispatchers.IO)
     private var job : Job? = null
 
@@ -23,66 +23,65 @@ class ClientHandler(client: Socket) {
 
         println("inetAddress: ${client.inetAddress}, port: ${client.port}")
         isRunning = true
-        if(clientId == -1)
+        if(currentClient == -1)
             addNewClient()
 
-        sendPositionToClient()
+        savePositionFromClient()
         //write("Welcome to the server.")
         while(isRunning){
-            when (clientId){
-                0 -> checkClientPosition(1)
-                1 -> checkClientPosition(0)
-                else ->{
-                    println("Número de cliente no registrado: $clientId")
-                }
-            }
-
+            checkAndSendAllClientsPositions()
             Thread.sleep(10)
         }
     }
 
-    private fun sendPositionToClient() {
+    private fun savePositionFromClient() {
 
         scope.launch {
-            println("Escuchamos mensaje cliente $clientId en ${Thread.currentThread().name}")
+            println("Escuchamos mensaje cliente $currentClient en ${Thread.currentThread().name}")
             while(isRunning) {
-                /*try {*/
-                if (scanner.hasNext()) {
-                    synchronized(GlobalData.listClientPosition) {
-                        var clientPosition = GlobalData.listClientPosition.get(clientId)
-                        val input = scanner.nextLine()
-                        val coordinates = input.split(" ").filter { it.isNotBlank() }
-                        val x = coordinates[0].toFloat()
-                        val y = coordinates[1].toFloat()
-                        clientPosition.posX = x
-                        clientPosition.posY = y
+                try {
+                    if (scanner.hasNext()) {
+                        synchronized(GlobalData.listClientPosition) {
+                            var clientPosition = GlobalData.listClientPosition.get(currentClient)
+                            val input = scanner.nextLine()
+                            val coordinates = input.split(" ").filter { it.isNotBlank() }
+                            val x = coordinates[0].toFloat()
+                            val y = coordinates[1].toFloat()
+                            clientPosition.posX = x
+                            clientPosition.posY = y
 
-                        println("Coordenadas recibidas: X = $x, Y = $y, para el cliente: $clientId")
+                            println("Coordenadas recibidas: X = $x, Y = $y, para el cliente: $currentClient")
 
-                        GlobalData.listClientPosition.set(clientId, clientPosition)
+                            GlobalData.listClientPosition.set(currentClient, clientPosition)
+                        }
                     }
+                }catch (e: Exception){
+                    println("Conexión perdida con el cliente $currentClient: ${e.message}")
+                    isRunning = false
+                }finally {
+                    //isRunning = false
                 }
             }
-            /*}catch (e: Exception){
-                println("Conexión perdida con el cliente $clientId: ${e.message}")
-            }finally {
-                isRunning = false
-            }*/
         }
     }
 
-    private fun checkClientPosition(pos: Int) {
-        if(GlobalData.listClientPosition.size >= pos+1){
-            //println("Check client $pos position")
-            var clientPosition = GlobalData.listClientPosition[pos]
-            sendClientPosition(clientPosition)
+    private fun checkAndSendAllClientsPositions() {
+        if(GlobalData.listClientPosition.size > 1){
+            //Por lo menos tiene que haber 2 clientes para poder empezar a mandar posiciones.
+            /*var clientPosition = GlobalData.listClientPosition[pos]
+            sendClientPosition(clientPosition)*/
+            for (clientPosition in GlobalData.listClientPosition){
+                if(clientPosition.clientId != currentClient){
+                    sendClientPosition(clientPosition)
+                }
+            }
         }else{
-            //println("Client $pos not initialized")
+            //Solo tenemos un cliente conectado al servidor, no hace falta mandar posiciones.
         }
     }
 
     fun sendClientPosition(clientPosition : ClientPositionComponent){
-        //write("SendingPosition")
+        //write("SendingPositionClient: ${clientPosition.clientId}")
         write(clientPosition.posX.toString())
         write(clientPosition.posY.toString())
     }
@@ -93,7 +92,7 @@ class ClientHandler(client: Socket) {
 
     fun addNewClient(){
         var clientPosition : ClientPositionComponent = ClientPositionComponent(GlobalData.clientCount, 0f, 0f)
-        clientId = GlobalData.clientCount
+        currentClient = GlobalData.clientCount
         GlobalData.listClientPosition.add(clientPosition)
         GlobalData.clientCount++
     }
