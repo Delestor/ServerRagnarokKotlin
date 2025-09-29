@@ -15,7 +15,6 @@ class ClientHandler(client: Socket) {
     private var isRunning: Boolean = false
     private val scanner: Scanner = Scanner(client.getInputStream())
     private val writer: PrintWriter = PrintWriter(client.getOutputStream(), true)
-    private val firstClient: Boolean = true
     private var clientId: Int = -1
     private val scope = CoroutineScope(Dispatchers.IO)
     private var job : Job? = null
