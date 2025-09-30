@@ -110,6 +110,8 @@ class ClientHandler(client: Socket) {
     }
 
     fun addNewClient(){
+        //TODO: Hay que hacer un broadcast cada vez que se añade un nuevo cliente a todos los clientes.
+        //TODO 2: También se ha de avisar a los nuevos clientes la existencia de los antiguos clientes.
         var clientPosition : ClientPositionComponent = ClientPositionComponent(GlobalData.clientCount, 0f, 0f)
         currentClient = GlobalData.clientCount
         GlobalData.listClientPosition.add(clientPosition)
