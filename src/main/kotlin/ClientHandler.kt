@@ -4,9 +4,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.PrintWriter
 import java.net.Socket
 import java.util.Scanner
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 
 class ClientHandler(client: Socket) {
 
@@ -31,6 +35,11 @@ class ClientHandler(client: Socket) {
         while(isRunning){
             checkAndSendAllClientsPositions()
             Thread.sleep(10)
+
+            if(client.isClosed){
+                println("Conexión cerrada con el cliente $currentClient")
+                isRunning = false
+            }
         }
     }
 
@@ -58,6 +67,7 @@ class ClientHandler(client: Socket) {
                 }catch (e: Exception){
                     println("Conexión perdida con el cliente $currentClient: ${e.message}")
                     isRunning = false
+                    client.close()
                 }finally {
                     //isRunning = false
                 }
@@ -81,13 +91,22 @@ class ClientHandler(client: Socket) {
     }
 
     fun sendClientPosition(clientPosition : ClientPositionComponent){
-        //write("SendingPositionClient: ${clientPosition.clientId}")
+        val json = JsonConfig.instance.encodeToString(clientPosition)
+
+        writer.println(json)
+        writer.flush()
+
+        /*
+        write("SendingPositionClient")
+        write(clientPosition.clientId.toString())
         write(clientPosition.posX.toString())
         write(clientPosition.posY.toString())
+         */
     }
 
     fun write(message: String){
         writer.println(message)
+        writer.flush()
     }
 
     fun addNewClient(){
@@ -95,6 +114,21 @@ class ClientHandler(client: Socket) {
         currentClient = GlobalData.clientCount
         GlobalData.listClientPosition.add(clientPosition)
         GlobalData.clientCount++
+
+        val newClientId = ClientIdComponent(currentClient)
+        val json = JsonConfig.instance.encodeToString(newClientId)
+        writer.println(json)
+        writer.flush()
+
+//        write("NewClientId")
+//        write(currentClient.toString())
+    }
+
+    object JsonConfig {
+        val instance = Json {
+            encodeDefaults = true
+            ignoreUnknownKeys = true
+        }
     }
 
 }
