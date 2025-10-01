@@ -9,8 +9,6 @@ import kotlinx.serialization.json.Json
 import java.io.PrintWriter
 import java.net.Socket
 import java.util.Scanner
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.encodeToJsonElement
 
 class ClientHandler(client: Socket) {
 
@@ -30,8 +28,8 @@ class ClientHandler(client: Socket) {
         if(currentClient == -1)
             addNewClient()
 
-        savePositionFromClient()
-        //write("Welcome to the server.")
+        checkClientPositionIsUpdated()
+
         while(isRunning){
             checkAndSendAllClientsPositions()
             Thread.sleep(10)
@@ -43,7 +41,7 @@ class ClientHandler(client: Socket) {
         }
     }
 
-    private fun savePositionFromClient() {
+    private fun checkClientPositionIsUpdated() {
 
         scope.launch {
             println("Escuchamos mensaje cliente $currentClient en ${Thread.currentThread().name}")
@@ -95,13 +93,6 @@ class ClientHandler(client: Socket) {
 
         writer.println(json)
         writer.flush()
-
-        /*
-        write("SendingPositionClient")
-        write(clientPosition.clientId.toString())
-        write(clientPosition.posX.toString())
-        write(clientPosition.posY.toString())
-         */
     }
 
     fun write(message: String){
@@ -121,9 +112,6 @@ class ClientHandler(client: Socket) {
         val json = JsonConfig.instance.encodeToString(newClientId)
         writer.println(json)
         writer.flush()
-
-//        write("NewClientId")
-//        write(currentClient.toString())
     }
 
     object JsonConfig {
